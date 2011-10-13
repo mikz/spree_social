@@ -9,6 +9,7 @@ module SpreeSocial
     ["Facebook", "facebook"],
     ["Foursquare", "foursquare"],
     ["Github", "github"], 
+    ['Google Hybrid', 'hybrid'],
     ["Google", "google"] , 
     ["Gowalla", "gowalla"], 
     ["instagr.am", "instagram"],
@@ -46,9 +47,9 @@ module SpreeSocial
         key = user.preferred_api_key
         secret = user.preferred_api_secret
         puts("[Spree Social] Loading #{user.preferred_provider.capitalize} as authentication source")
+        self.setup_key_for(provider.to_sym, key, secret)
       end
     end if self.table_exists?("authentication_methods") # See Below for explanation
-    self.setup_key_for(provider.to_sym, key, secret)
   end
 
   def self.setup_key_for(provider, key, secret)

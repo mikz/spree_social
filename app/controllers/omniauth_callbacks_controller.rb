@@ -27,11 +27,22 @@ class OmniauthCallbacksController < Devise::OmniauthCallbacksController
       return
     end
 
+    Rails.logger.debug "Received omniauth params: #{omniauth.to_s}"
+
     existing_auth = UserAuthentication.where(:provider => omniauth['provider'], :uid => omniauth['uid'].to_s).first
 
     #signing back in from a social source
     if existing_auth
       user = existing_auth.user
+
+      # TODO: current_user is nil, according to log is deauthed before this action
+      # if user tried to signin before, but didnt finished signup
+      # and now is signed up and trying to link unlinked auth
+      # assign auth to current user
+      if user.anonymous? && current_user
+        user = existing_auth.user = current_user
+        existing_auth.save!
+      end
     else # adding a social source
       user = current_user
     end
@@ -46,10 +57,12 @@ class OmniauthCallbacksController < Devise::OmniauthCallbacksController
     end
 
     if user.anonymous?
+      user_info = omniauth.try(:[], 'extra').try(:[], 'user_hash') || omniauth.try(:[], 'user_info')
+
       session[:user_access_token] = user.token #set user access token so we can edit this user again later
 
       flash.now[:notice] = t("one_more_step", :kind => omniauth['provider'].capitalize)
-      render(:template => "user_registrations/social_edit", :locals => {:user => user, :omniauth => omniauth})
+      render(:template => "user_registrations/social_edit", :locals => {:user => user, :user_info => user_info})
     elsif current_user
       flash[:error] = t("attach_error", :kind => omniauth['provider'].capitalize) if existing_auth && (existing_auth.user != current_user)
       redirect_back_or_default(account_url)
