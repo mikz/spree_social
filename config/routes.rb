@@ -1,4 +1,4 @@
-Spree::Core::Engine.routes.append do
+Spree::Core::Engine.routes.prepend do
   # We need to be tricky here or Devise loads up the defaults again.
   devise_for :user_authentications,
              :class_name => 'Spree::UserAuthentication',
